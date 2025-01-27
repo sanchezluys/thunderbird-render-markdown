@@ -1,3 +1,24 @@
+# MarkDown renderización
+
+
+## Instalación
+
+![alt text](img/image-3.png)
+
+![alt text](img/image-4.png)
+
+instalar el archivo .xpi
+
+Configuración
+
+- Funciona para todos los correos entrantes o solo para un correo de un remitente en especifico
+
+![alt text](img/image.png)
+
+![alt text](img/image-1.png)
+
+![alt text](img/image-2.png)
+
 # Render Markdown messages in the reading pane
 
 This extension renders markdown-formatted messages as rich text. It preserves the formatting of plain text messages but adds support for markdown features like lists, code blocks, etc.

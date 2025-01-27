@@ -6,9 +6,34 @@ const markdownPatterns = [
 const textPlainPattern = /^text\/plain\b/i;
 const rfc822Pattern = /^message\/rfc822\b/i;
 const defaultDetectScope = 'all-plain-text';
+
+// Variables existentes
 let detectScope = defaultDetectScope;
 let isMarkdownMessage = false;
 let showingMarkdown = false;
+
+// Nuevas variables para el filtro de remitente
+let senderEmail = '';
+let enableSenderFilter = false;
+
+// Nueva función para verificar el remitente
+async function checkSender(messageId) {
+  try {
+    const messageDetails = await messenger.messages.get(messageId);
+    const from = messageDetails.author || messageDetails.from;
+    
+    // Si el filtro no está activado, permitir todos los remitentes
+    if (!enableSenderFilter) {
+      return true;
+    }
+    
+    // Si el filtro está activado, verificar el remitente
+    return from.toLowerCase().includes(senderEmail.toLowerCase());
+  } catch (error) {
+    console.error('Error checking sender:', error);
+    return false;
+  }
+}
 
 function shouldDisplayMarkdown(contentType) {
   let patterns =
@@ -22,7 +47,7 @@ function getPlainText(messagePart) {
   if (
     messagePart.body &&
     (textPlainPattern.test(messagePart.contentType) ||
-      markdownPatterns.some((pattern) => pattern.test(contentType)))
+      markdownPatterns.some((pattern) => pattern.test(messagePart.contentType)))
   ) {
     return messagePart.body;
   }
@@ -36,11 +61,19 @@ function getPlainText(messagePart) {
   }
 }
 
+// Función modificada para incluir verificación de remitente
 async function detectMarkdownMessage(tabId) {
   isMarkdownMessage = false;
   showingMarkdown = false;
 
   let message = await messenger.messageDisplay.getDisplayedMessage(tabId);
+  
+  // Verificar el remitente antes de procesar el mensaje
+  const isSenderAllowed = await checkSender(message.id);
+  if (!isSenderAllowed) {
+    return;
+  }
+
   let full = await messenger.messages.getFull(message.id);
 
   if (shouldDisplayMarkdown(full.headers['content-type'])) {
@@ -73,21 +106,31 @@ async function updateContextMenuItem() {
   }
 }
 
+// Listener modificado para incluir las nuevas opciones
+browser.storage.onChanged.addListener((changes) => {
+  if (changes.scope) {
+    detectScope = changes.scope.newValue || defaultDetectScope;
+  }
+  if (changes.senderEmail) {
+    senderEmail = changes.senderEmail.newValue || '';
+  }
+  if (changes.enableSenderFilter !== undefined) {
+    enableSenderFilter = changes.enableSenderFilter.newValue;
+  }
+});
+
+// Carga inicial de configuración modificada
+browser.storage.sync.get(['scope', 'senderEmail', 'enableSenderFilter']).then((res) => {
+  detectScope = res.scope || defaultDetectScope;
+  senderEmail = res.senderEmail || '';
+  enableSenderFilter = res.enableSenderFilter || false;
+});
+
 // When the page sends us a command (when it loaded), detect markdown
 browser.runtime.onMessage.addListener((data, sender) => {
   if (data.command === 'detectMarkdownMessage') {
     detectMarkdownMessage(sender.tab.id);
   }
-});
-
-// Listen to option changes for our detectScope option
-browser.storage.onChanged.addListener((changes) => {
-  if (!!changes.scope) {
-    detectScope = changes.scope.newValue || defaultDetectScope;
-  }
-});
-browser.storage.sync.get('scope').then((res) => {
-  detectScope = res.scope || defaultDetectScope;
 });
 
 // Inject markdown rendering scripts and CSS
