@@ -1,12 +1,12 @@
 {
     "name": "Render Markdown Messages",
-    "description": "Render Markdown-formatted messages in the reading pane",
+    "description": "Render Markdown-formatted messages in the reading pane from a email",
     "manifest_version": 2,
-    "version": "1.2.1",
-    "author": "David Gileadi",
+    "version": "1.0",
+    "author": "Luis Sánchez",
     "applications": {
         "gecko": {
-            "id": "renderMarkdownMessages@gileadi.com",
+            "id": "renderMarkdownMessages@sanchezluys.com",
             "strict_min_version": "78.0"
         }
     },

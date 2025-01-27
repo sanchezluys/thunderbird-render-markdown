@@ -7,7 +7,11 @@
             "label": "create xpi",
             "type": "shell",
             "command": "zip -r render-markdown.xpi . -x .\\*",
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
